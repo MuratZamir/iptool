@@ -287,44 +287,6 @@ def get_asn_info(asn):
         print_box_content(f"An error occurred during ASN lookup: {e}")
     print_box_bottom()
 
-
-def get_shodan_info(ip_address):
-    """
-    Gets information about an IP address from Shodan.
-    """
-    print_box_top("Shodan Information")
-    api_key = os.environ.get("SHODAN_API_KEY")
-    if not api_key:
-        print_box_content("Error: SHODAN_API_KEY environment variable not set. Shodan information will be limited.")
-        print_box_bottom()
-        return
-
-    api = shodan.Shodan(api_key)
-    try:
-        host = api.host(ip_address)
-        print_box_content(f"Country: {host.get('country_name', 'N/A')}")
-        print_box_content(f"City: {host.get('city', 'N/A')}")
-        print_box_content(f"Organization: {host.get('org', 'N/A')}")
-        print_box_content(f"Operating System: {host.get('os', 'N/A')}")
-        print_box_content("Open Ports:")
-        for item in host['data']:
-            print_box_content(f"  - Port: {item['port']}")
-            banner = item.get('data', '').strip()
-            if banner:
-                print_box_content("    Banner:")
-                for line in banner.split('\n'):
-                    # Indent each line of the banner for clarity
-                    print_box_content(f"      {line.strip()}")
-            else:
-                print_box_content("    Banner: (empty)")
-    except shodan.APIError as e:
-        print_box_content(f"Error from Shodan: {e}")
-    except Exception as e:
-        print_box_content(f"An error occurred during Shodan lookup: {e}")
-    print_box_bottom()
-
-
-
 def main():
     parser = argparse.ArgumentParser(description='A tool to get information about an IP address, domain name, or ASN.')
     parser.add_argument('target', help='The IP address, domain name, or ASN to get information about.')
@@ -340,7 +302,6 @@ def main():
             get_ip_asn_info(ip_address)
             get_reverse_dns_info(ip_address)
             get_ip_reputation(ip_address)
-            get_shodan_info(ip_address)
         except socket.gaierror as e:
             print_box_top("Domain Resolution Error")
             print_box_content(f"Could not resolve {args.target}: {e}")
@@ -349,7 +310,6 @@ def main():
         get_ip_asn_info(args.target)
         get_reverse_dns_info(args.target)
         get_ip_reputation(args.target)
-        get_shodan_info(args.target)
     elif is_asn(args.target):
         get_asn_info(args.target)
     elif is_cidr(args.target):
@@ -361,9 +321,8 @@ def main():
             get_reverse_dns_info(first_ip)
             get_ip_reputation(first_ip)
             get_whois_info(first_ip)
-            get_shodan_info(first_ip)
         else:
-            print("\n[+] Detected CIDR range. Performing lookup for the network address.")
+            print("[+] Detected CIDR range. Performing lookup for the network address.")
             get_ip_asn_info(first_ip)
             get_whois_info(args.target) # Try WHOIS on the CIDR itself
             print("\nNote: For CIDR ranges, detailed per-IP lookups (like individual IP reputation or reverse DNS for every IP) are not performed due to performance and API rate limit considerations. Information is provided for the network block as a whole.")
